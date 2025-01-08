@@ -1,5 +1,6 @@
 -- imports
 local love = love
+local helper = require "wuv.lib.helper"
 local print = print
 setfenv(1,{})
 -- /imports
@@ -21,12 +22,22 @@ local pointer = {
   secondaryButton = buttonState.UP
 }
 
+local joystick = {
+  name = nil,
+  
+  buttonCount = 0,
+  buttonStates = {},
+  
+  axisCount = 0,
+  axes = {}
+}
+
 local activeJoystick = nil -- only supports one active controller
 local searchingForJoystick = false
 
 -- functions
-local function updateButtonState(buttonNum, prevButtonState)
-  if love.mouse.isDown(buttonNum) then
+local function getButtonState(buttonDownFunc, buttonNum, prevButtonState)
+  if buttonDownFunc(buttonNum) then
     if prevButtonState == buttonState.PRESSED or prevButtonState == buttonState.HELD then
       return buttonState.HELD
     else
@@ -41,21 +52,38 @@ local function updateButtonState(buttonNum, prevButtonState)
   end
 end
 
+local function getMouseButtonState(buttonNum, prevButtonState)
+  return getButtonState(love.mouse.isDown, buttonNum, prevButtonState)
+end
+
+local function getJoystickButtonState(buttonNum, prevButtonState)
+  return getButtonState(helper.bind(activeJoystick, "isDown"), buttonNum, prevButtonState)
+end
+
 local function updatePointer()
   local prevX = pointer.x
   local prevY = pointer.y
   
-  pointer.x, pointer.y = love.mouse.getPosition()
+  pointer.x, pointer.y = love.mouse.getPosition() -- TODO is touch control handled here?
   pointer.xDelta = pointer.x - prevX
   pointer.yDelta = pointer.y - prevY
   
-  pointer.primaryButton = updateButtonState(1, pointer.primaryButton)
-  pointer.secondaryButton = updateButtonState(2, pointer.secondaryButton)
+  pointer.primaryButton = getMouseButtonState(1, pointer.primaryButton)
+  pointer.secondaryButton = getMouseButtonState(2, pointer.secondaryButton)
 end
 
-local function setSearchingForJoystick(enabled)
+local function disconnectJoystick()
   activeJoystick = nil
-  searchingForJoystick = enabled
+  joystick.name = nil
+  joystick.buttonCount = 0
+  joystick.buttonStates = {}
+  joystick.axisCount = 0
+  joystick.axes = {}
+end
+
+local function searchForJoystick()
+  disconnectJoystick()
+  searchingForJoystick = true
 end
 
 local function getJoystickConnected()
@@ -70,7 +98,13 @@ local function findJoystick()
     for j = 1, count do
       if joysticks[i]:isDown(j) then
         activeJoystick = joysticks[i]
-        print("we got em")
+        joystick.name = activeJoystick:getName()
+        joystick.buttonCount = activeJoystick:getButtonCount()
+        for i = 1, joystick.buttonCount do
+          joystick.buttonStates[i] = buttonState.UP
+        end
+        joystick.axisCount = activeJoystick:getAxisCount()
+        searchingForJoystick = false
         return
       end
     end
@@ -84,7 +118,12 @@ local function updateJoystick()
   if not activeJoystick then
     return
   end
-  print("updating joystick " .. activeJoystick:getID())
+  for i = 1, joystick.buttonCount do
+    joystick.buttonStates[i] = getJoystickButtonState(i, joystick.buttonStates[i])
+  end
+  for i = 1, joystick.axisCount do
+    joystick.axes[i] = activeJoystick:getAxis(i)
+  end
 end
 
 local function update()
@@ -97,8 +136,10 @@ end
 input = {
   buttonState = buttonState,
   pointer = pointer,
-  setSearchingForJoystick = setSearchingForJoystick,
+  joystick = joystick,
+  searchForJoystick = searchForJoystick,
   getJoystickConnected = getJoystickConnected,
+  disconnectJoystick = disconnectJoystick,
   update = update
 }
 return input
