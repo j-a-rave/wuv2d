@@ -1,7 +1,7 @@
 -- imports
 local love = love
-local shapes = require "wuv.lib.shapes"
-local img = require "wuv.lib.img"
+local shapes = require "wuv.shapes"
+local img = require "wuv.img"
 local abs = math.abs
 setfenv(1,{})
 -- /imports

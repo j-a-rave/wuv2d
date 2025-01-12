@@ -1,6 +1,6 @@
 -- imports
 local love = love
-local helper = require "wuv.lib.helper"
+local func = require "wuv.func"
 local print = print
 setfenv(1,{})
 -- /imports
@@ -57,7 +57,7 @@ local function getMouseButtonState(buttonNum, prevButtonState)
 end
 
 local function getJoystickButtonState(buttonNum, prevButtonState)
-  return getButtonState(helper.bind(activeJoystick, "isDown"), buttonNum, prevButtonState)
+  return getButtonState(func.bind(activeJoystick, "isDown"), buttonNum, prevButtonState)
 end
 
 local function updatePointer()
