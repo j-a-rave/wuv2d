@@ -75,7 +75,7 @@ function Circle:contains(x, y)
 end
 
 
--- Package
+-- package
 shapes = {
   Shape = Shape,
   Rect = Rect,

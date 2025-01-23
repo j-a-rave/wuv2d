@@ -34,6 +34,7 @@ local function rangeInt(min, max)
   return floor(rangeFloat(min, max))
 end
 
+-- package
 random = {
   rand = rand,
   rangeFloat = rangeFloat,

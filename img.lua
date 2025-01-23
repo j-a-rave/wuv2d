@@ -14,6 +14,7 @@ local function get(img)
   return loaded
 end
 
+-- package
 img = {
   get = get
 }

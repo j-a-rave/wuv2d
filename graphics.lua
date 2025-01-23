@@ -40,7 +40,7 @@ function Sprite:move(x, y)
 end
 
 
--- Package
+-- package
 graphics = {
   Sprite = Sprite
 }

@@ -132,7 +132,7 @@ local function update()
 end
 
 
--- Package
+-- package
 input = {
   buttonState = buttonState,
   pointer = pointer,
