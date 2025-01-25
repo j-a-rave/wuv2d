@@ -1,5 +1,6 @@
 -- imports
 local table = require "wuv.table"
+local random = require "wuv.random"
 local print = print
 local io = io
 local os = os
@@ -21,9 +22,19 @@ local DETAIL_DEFAULT = "DEFAULT"
 local DETAIL_VERBOSE = "VERBOSE"
 local details = {DETAIL_DEFAULT, DETAIL_VERBOSE}
 
+-- other headers
+local INDEX = "index"
+local CATEGORY = "category"
+local MESSAGE = "message"
+
 -- local only variables
 local LOG_LOG = "wuv.log"
 local logDetail = DETAIL_DEFAULT
+local logIndex = 0
+local logPath = random.str(5) .. ".csv"
+print(logPath)
+local logFile = io.open(logPath, "w")
+logFile:write(table.concat({INDEX, CATEGORY, LEVEL, MESSAGE, DETAIL}, ", ") .. "\n")
 
 -- list of stored categories
 local categories = {}
@@ -49,17 +60,18 @@ local function write(category, message, level, detail)
   local d = detail or DETAIL_DEFAULT
 
   if not table.get(categories, category, nil) then
-    register(category, level, detail)
-    write(LOG_LOG, "Registering category: " .. category .. ", " .. l .. ", " .. d)
+    register(category, l, d)
+    write(LOG_LOG, "Registering category: " .. category)
   end
     -- do not log detail levels higher than the current setting
   if table.find(details, d) > table.find(details, logDetail) then
     return
   end
   
-  -- TODO replace with io
-  -- TODO get more precise timestamps
-  print(category .. " " .. l .. ": " .. message .. ", " .. os.time(os.date("!*t")))
+  output = table.concat({logIndex, category, l, message, d}, ", ") .. "\n"
+  print(output)
+  logFile:write(output)
+  logIndex = logIndex + 1
 end
 
 local function setDetail(detail)
@@ -71,24 +83,26 @@ local function setDetail(detail)
   write(LOG_LOG, "Detail level set to " .. logDetail)
 end
 
+local function onExit()
+  io.close(logFile)
+end
+
 register(LOG_LOG)
-setDetail(DETAIL_DEFAULT)
 
 -- package
 log = {
-  LEVEL = LEVEL,
   LEVEL_DEBUG = LEVEL_DEBUG,
   LEVEL_INFO = LEVEL_INFO,
   LEVEL_WARNING = LEVEL_WARNING,
   LEVEL_ERROR = LEVEL_ERROR,
   LEVEL_FATAL = LEVEL_FATAL,
   
-  DETAIL = DETAIL,
   DETAIL_DEFAULT = DETAIL_DEFAULT,
   DETAIL_VERBOSE = DETAIL_VERBOSE,
   
   register = register,
   write = write,
-  setDetail = setDetail
+  setDetail = setDetail,
+  onExit = onExit
 }
 return log
